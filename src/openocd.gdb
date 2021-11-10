@@ -1,5 +1,5 @@
 # Connect to gdb remote server
-target remote :3333
+target extended-remote :3333
 
 # Load will flash the code
 load
@@ -12,6 +12,8 @@ set print pretty on
 
 # Disable style sources as the default colors can be hard to read
 set style sources off
+
+monitor arm semihosting enable
 
 # Initialize monitoring so iprintln! macro output
 # is sent from the itm port to itm.txt
