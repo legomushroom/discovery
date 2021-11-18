@@ -6,6 +6,7 @@ use core::fmt::{self, Write};
 
 #[allow(unused_imports)]
 use aux11::{entry, iprint, iprintln, usart1};
+use usart::write_str;
 
 macro_rules! uprint {
     ($serial:expr, $($arg:tt)*) => {
@@ -28,8 +29,8 @@ struct SerialPort {
 
 impl fmt::Write for SerialPort {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        // TODO implement this
-        // hint: this will look very similar to the previous program
+        write_str(self.usart1, s);
+
         Ok(())
     }
 }
@@ -40,7 +41,7 @@ fn main() -> ! {
 
     let mut serial = SerialPort { usart1 };
 
-    uprintln!(serial, "The answer is {}", 40 + 2);
+    uprintln!(serial, "\rThe answer is {}", 40 + 2);
 
     loop {}
 }

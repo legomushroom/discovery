@@ -5,7 +5,9 @@ name = "aux14"
 version = "0.1.0"
 
 [dependencies]
-cortex-m = "0.6.3"
-cortex-m-rt = "0.6.3"
+cortex-m = "0.7.3"
+cortex-m-rt = "0.6"
 panic-itm = "0.4.0"
-stm32f3-discovery = "0.6.0"
+stm32f3-discovery = "0.7.2"
+embedded-time = "0.12.1"
+lsm303agr = "0.2.2"
