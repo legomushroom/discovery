@@ -1,22 +1,20 @@
-//! Initialization code
-
+#![no_main]
 #![no_std]
 
 #[allow(unused_extern_crates)] //  bug rust-lang/rust#53964
 extern crate panic_itm; // panic handler
 
-use core::fmt;
+use core::fmt::{self, Debug};
 use core::fmt::Write;
 
-pub use cortex_m::{asm::bkpt, iprint, iprintln};
-pub use cortex_m_rt::entry;
-use lsm303agr::{AccelOutputDataRate, Lsm303agr,};
-pub use stm32f3_discovery::stm32f3xx_hal::{delay::Delay, prelude::*};
+use hal::{i2c::I2c, pac::{Peripherals, USART1, usart1}, serial::Serial, time::rate::Hertz};
+use stm32f3xx_hal::{self as hal, delay::Delay, prelude::*};
 
-// use cortex_m::peripheral::ITM;
-use stm32f3_discovery::{stm32f3xx_hal::{i2c::I2c, pac::{I2C1, Peripherals, USART1, i2c1, usart1}, serial::Serial}};
+// use embedded_hal::I2c;
+use lsm303agr::Lsm303agr;
 
-use embedded_time::rate::{Extensions, Hertz};
+use cortex_m_rt::entry;
+
 
 pub fn write_str<T: AsRef<str>>(
     usart1: &'static usart1::RegisterBlock,
@@ -99,7 +97,26 @@ macro_rules! uprintln {
 }
 
 
-pub fn init() -> (&'static i2c1::RegisterBlock, Delay) {
+enum Direction {
+    Southeast,
+    Southwest,
+    Northeast,
+    Northwest,
+}
+
+impl Debug for Direction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Southeast => write!(f, "[Southeast]"),
+            Self::Southwest => write!(f, "[Southwest]"),
+            Self::Northeast => write!(f, "[Northeast]"),
+            Self::Northwest => write!(f, "[Northwest]"),
+        }
+    }
+}
+
+#[entry]
+fn main() -> ! {
     let cp = cortex_m::Peripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
@@ -107,6 +124,7 @@ pub fn init() -> (&'static i2c1::RegisterBlock, Delay) {
     let mut rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    let mut delay = Delay::new(cp.SYST, clocks);
 
     let (tx, rx) = match () {
         #[cfg(feature = "adapter")]
@@ -130,38 +148,58 @@ pub fn init() -> (&'static i2c1::RegisterBlock, Delay) {
     };
 
     Serial::new(dp.USART1, (tx, rx), 115_200.Bd(), clocks, &mut rcc.apb2);
-    // If you are having trouble sending/receiving data to/from the
-    // HC-05 bluetooth module, try this configuration instead:
-    // Serial::usart1(dp.USART1, (tx, rx), 9600.bps(), clocks, &mut rcc.apb2);
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
+    // clock line of the I2C bus
     let scl = gpiob.pb6.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+    // data line of the I2C bus
     let sda = gpiob.pb7.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), Hertz::new(400_000), clocks, &mut rcc.apb1);
 
     let mut sensor = Lsm303agr::new_with_i2c(i2c);
+
     sensor.init().unwrap();
-    sensor.set_accel_odr(AccelOutputDataRate::Hz50).unwrap();
-
+    // sensor.set_accel_odr(AccelOutputDataRate::Hz50).unwrap();
+    sensor.set_mag_odr(lsm303agr::MagOutputDataRate::Hz50).unwrap();
+    
     let usart1 = unsafe { &mut *(USART1::ptr() as *mut _) };
-
-    let delay = Delay::new(cp.SYST, clocks);
     let mut serial = SerialPort::new(usart1);
 
-    loop {
-        if sensor.accel_status().unwrap().xyz_new_data {
-            let data = sensor.accel_data().unwrap();
-            // bkpt();
-            uprintln!(serial, "\rdata: x {} y {} z {}", data.x, data.y, data.z);
-        }
+    let maybe_sensor = sensor.into_mag_continuous();
 
-        // delay.delay_ms(1000_u16);
+    match maybe_sensor {
+    Ok(mut sensor) => {
+        loop {
+            let data = sensor.mag_data()
+                .expect("Reading not found.");
 
-        if 2 + 2 == 5 {
-            break;
+
+            // uprintln!(serial, "\rdata: {:?}", data);
+            
+            let direction = match (data.x > 0, data.y > 0) {
+                (true, true) => Direction::Southeast,
+                (false, true) => Direction::Northeast,
+                (true, false) => Direction::Southwest,
+                (false, false) => Direction::Northwest,
+            };
+
+            uprintln!(serial, "\rdirection: {:?}", direction);
+    
+            delay.delay_ms(200_u16);
+            //     .expect("Cannot get magnetrometer measurements.");
+    
+            // uprintln!(serial, "\rMagnetrometer: x {} y {} z {}", data.x, data.y, data.z);
+    
+    
+            //     let _data = sensor.accel_data().unwrap();
+    
+                // uprintln!("Acceleration: x {} y {} z {}", data.x, data.y, data.z);
+            // }
         }
+    },
+    Err(_) => {
+        panic!("error");
+    },
     }
-
-    unsafe { (&mut *(I2C1::ptr() as *mut _), delay) }
 }

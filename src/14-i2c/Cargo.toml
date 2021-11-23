@@ -6,3 +6,9 @@ version = "0.1.0"
 
 [dependencies]
 aux14 = { path = "auxiliary" }
+stm32f3 = { version = "0.14.0", features = ["stm32f303", "rt"]}
+panic-itm = "0.4.2"
+cortex-m = "0.7.3"
+cortex-m-rt = "0.7.0"
+
+[dev.dependencies]

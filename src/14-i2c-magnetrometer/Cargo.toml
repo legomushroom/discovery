@@ -1,0 +1,18 @@
+[package]
+authors = ["Oleg Solomka <legomushroom@gmail.com>"]
+edition = "2018"
+name = "i2c-custom"
+version = "0.1.0"
+
+[dependencies]
+# stm32f3 = { version = "0.14.0", features = ["stm32f303", "rt"]}
+panic-itm = "0.4.2"
+cortex-m = "0.7.2"
+cortex-m-rt = { version = "0.6.13", features = ["device"] }
+lsm303agr = "0.2.2"
+embedded-hal = "0.2.6"
+stm32f3xx-hal = { version = "0.8.1", features = ["ld", "rt", "stm32f303xc"] }
+# stm32f3 = { version = "0.14.0", features = ["stm32f303", "rt"]}
+# stm32f3-discovery = "0.7.2"
+
+[workspace]
