@@ -6,9 +6,15 @@ extern crate panic_itm; // panic handler
 
 use core::fmt::{self, Debug};
 use core::fmt::Write;
+use core::f32::consts::PI;
 
+use embedded_hal::digital::v2::PinState;
+use hal::gpio::marker::Gpio;
+use hal::gpio::{Gpioe, Output, Pin, PushPull};
 use hal::{i2c::I2c, pac::{Peripherals, USART1, usart1}, serial::Serial, time::rate::Hertz};
 use stm32f3xx_hal::{self as hal, delay::Delay, prelude::*};
+
+use m::Float;
 
 // use embedded_hal::I2c;
 use lsm303agr::Lsm303agr;
@@ -97,20 +103,36 @@ macro_rules! uprintln {
 }
 
 
-enum Direction {
-    Southeast,
-    Southwest,
-    Northeast,
-    Northwest,
+/// Cardinal directions. Each one matches one of the user LEDs.
+pub enum Direction {
+    /// North / LD3
+    North,
+    /// Northeast / LD5
+    NorthEast,
+    /// East / LD7
+    East,
+    /// Southeast / LD9
+    SouthEast,
+    /// South / LD10
+    South,
+    /// Southwest / LD8
+    SouthWest,
+    /// West / LD6
+    West,
+    /// Northwest / LD4
+    NorthWest,
 }
-
 impl Debug for Direction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Southeast => write!(f, "[Southeast]"),
-            Self::Southwest => write!(f, "[Southwest]"),
-            Self::Northeast => write!(f, "[Northeast]"),
-            Self::Northwest => write!(f, "[Northwest]"),
+            Self::North => write!(f, "North"),
+            Self::NorthWest => write!(f, "NorthWest"),
+            Self::NorthEast => write!(f, "NorthEast"),
+            Self::South => write!(f, "South"),
+            Self::SouthWest => write!(f, "SouthWest"),
+            Self::SouthEast => write!(f, "SouthEast"),
+            Self::West => write!(f, "West"),
+            Self::East => write!(f, "East"),
         }
     }
 }
@@ -168,35 +190,99 @@ fn main() -> ! {
 
     let maybe_sensor = sensor.into_mag_continuous();
 
+    let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
+
+    let mut led8 = gpioe.pe8.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+    let mut led9 = gpioe.pe9.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+    let mut led10 = gpioe.pe10.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+    let mut led11 = gpioe.pe11.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+    let mut led12 = gpioe.pe12.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+    let mut led13 = gpioe.pe13.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+    let mut led14 = gpioe.pe14.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+    let mut led15 = gpioe.pe15.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+
     match maybe_sensor {
-    Ok(mut sensor) => {
-        loop {
-            let data = sensor.mag_data()
-                .expect("Reading not found.");
+        Ok(mut sensor) => {
+            loop {
+                let data = sensor.mag_data()
+                    .expect("Reading not found.");
 
 
-            // uprintln!(serial, "\rdata: {:?}", data);
-            
-            let direction = match (data.x > 0, data.y > 0) {
-                (true, true) => Direction::Southeast,
-                (false, true) => Direction::Northeast,
-                (true, false) => Direction::Southwest,
-                (false, false) => Direction::Northwest,
-            };
+                // uprintln!(serial, "\rdata: {:?}", data);
 
-            uprintln!(serial, "\rdirection: {:?}", direction);
-    
-            delay.delay_ms(200_u16);
-            //     .expect("Cannot get magnetrometer measurements.");
-    
-            // uprintln!(serial, "\rMagnetrometer: x {} y {} z {}", data.x, data.y, data.z);
-    
-    
-            //     let _data = sensor.accel_data().unwrap();
-    
-                // uprintln!("Acceleration: x {} y {} z {}", data.x, data.y, data.z);
-            // }
-        }
+                let theta = (data.y as f32).atan2(data.x as f32); // in radians
+                
+                let direction = if theta < -7. * PI / 8. {
+                    Direction::North
+                } else if theta < -5. * PI / 8. {
+                    Direction::NorthWest
+                } else if theta < -3. * PI / 8. {
+                    Direction::West
+                } else if theta < -PI / 8. {
+                    Direction::SouthWest
+                } else if theta < PI / 8. {
+                    Direction::South
+                } else if theta < 3. * PI / 8. {
+                    Direction::SouthEast
+                } else if theta < 5. * PI / 8. {
+                    Direction::East
+                } else if theta < 7. * PI / 8. {
+                    Direction::NorthEast
+                } else {
+                    Direction::North
+                };
+
+                led8.set_state(PinState::Low).expect("Cannot set LED8 state.");
+                led9.set_state(PinState::Low).expect("Cannot set LED9 state.");
+                led10.set_state(PinState::Low).expect("Cannot set LED10 state.");
+                led11.set_state(PinState::Low).expect("Cannot set LED11 state.");
+                led12.set_state(PinState::Low).expect("Cannot set LED12 state.");
+                led13.set_state(PinState::Low).expect("Cannot set LED13 state.");
+                led14.set_state(PinState::Low).expect("Cannot set LED14 state.");
+                led15.set_state(PinState::Low).expect("Cannot set LED15 state.");
+
+                match direction {
+                    Direction::North => {
+                        led8.set_state(PinState::High).expect("Cannot set LED8 state.");
+                    },
+                    Direction::NorthEast => {
+                        led9.set_state(PinState::High).expect("Cannot set LED9 state.");
+                    },
+                    Direction::East => {
+                        led10.set_state(PinState::High).expect("Cannot set LED10 state.");
+                    },
+                    Direction::SouthEast => {
+                        led11.set_state(PinState::High).expect("Cannot set LED11 state.");
+                    },
+                    Direction::South => {
+                        led12.set_state(PinState::High).expect("Cannot set LED12 state.");
+                    },
+                    Direction::SouthWest => {
+                        led13.set_state(PinState::High).expect("Cannot set LED13 state.");
+                    },
+                    Direction::West => {
+                        led14.set_state(PinState::High).expect("Cannot set LED14 state.");
+                    },
+                    Direction::NorthWest => {
+                        led15.set_state(PinState::High).expect("Cannot set LED15 state.");
+                    },
+                }
+
+                // &set_led_state(direction as u8, true);
+
+                uprintln!(serial, "\rdirection: {:?}, z: {}", direction, data.z);
+        
+                delay.delay_ms(100_u16);
+                //     .expect("Cannot get magnetrometer measurements.");
+        
+                // uprintln!(serial, "\rMagnetrometer: x {} y {} z {}", data.x, data.y, data.z);
+        
+        
+                //     let _data = sensor.accel_data().unwrap();
+        
+                    // uprintln!("Acceleration: x {} y {} z {}", data.x, data.y, data.z);
+                // }
+            }
     },
     Err(_) => {
         panic!("error");

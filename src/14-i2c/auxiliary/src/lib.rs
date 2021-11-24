@@ -13,7 +13,6 @@ pub use cortex_m_rt::entry;
 use lsm303agr::{AccelOutputDataRate, Lsm303agr,};
 pub use stm32f3_discovery::stm32f3xx_hal::{delay::Delay, prelude::*};
 
-// use cortex_m::peripheral::ITM;
 use stm32f3_discovery::{stm32f3xx_hal::{i2c::I2c, pac::{I2C1, Peripherals, USART1, i2c1, usart1}, serial::Serial}};
 
 use embedded_time::rate::{Extensions, Hertz};
@@ -57,9 +56,7 @@ pub struct SerialPort {
 
 impl fmt::Write for SerialPort {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        // write_str(self.usart1, s);
 
-        // let str = str.as_ref();
         for char in s.chars() {
             while self.usart1.isr.read().txe().bit_is_clear() {}
 
