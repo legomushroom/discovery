@@ -9,10 +9,12 @@ use core::f32::consts::PI;
 use hal::{i2c::I2c, pac::Peripherals, serial::Serial, time::rate::Hertz};
 use stm32f3xx_hal::{self as hal, delay::Delay, prelude::*};
 
+// #[allow(unused_imports)]
+// use aux111::{iprint, iprintln};
+
 #[allow(unused_imports)]
 use m::Float;
 
-// use embedded_hal::I2c;
 use lsm303agr::Lsm303agr;
 
 use cortex_m_rt::entry;
@@ -27,6 +29,8 @@ pub use compass_direction::CompassDirection;
 fn main() -> ! {
     let cp = cortex_m::Peripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
+
+    // let (usart1, _mono_timer, _itm) = aux111::init();
 
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
@@ -72,6 +76,17 @@ fn main() -> ! {
     
     let maybe_sensor = sensor.into_mag_continuous();
 
+    // let compass_direction_str = "\r\nCodespaces are dool! ";
+
+    // for c in compass_direction_str.chars() {
+    //     while usart1.isr.read().txe().bit_is_clear() {} // <- NEW!
+
+    //     // Send a single character
+    //     usart1
+    //         .tdr
+    //         .write(|w| w.tdr().bits(c as u16));
+    // }
+        
     let mut leds = LEDs::new(dp.GPIOE.split(
         &mut rcc.ahb),
     );

@@ -65,7 +65,7 @@ impl LEDs {
                 self.north_west.set_high().expect("cannot set `north_west` LED to high");
             },
             CompassDirection::North => {
-                self.north.set_high().expect("cannot set `north` LED to high");
+                self.north.set_low().expect("cannot set `north` LED to high");
             },
             CompassDirection::NorthEast => {
                 self.north_east.set_high().expect("cannot set `north_east` LED to high");

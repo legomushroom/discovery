@@ -1,13 +1,14 @@
 [package]
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
 edition = "2018"
-name = "aux15"
+name = "aux111"
 version = "0.1.0"
 
 [dependencies]
 cortex-m = "0.7.2"
-cortex-m-rt = { version = "0.6.13", features = ["device"] }
-panic-itm = "0.4.0"
-lsm303agr = "0.2.2"
-embedded-hal = "0.2.6"
-stm32f3xx-hal = { version = "0.8.1", features = ["ld", "rt", "stm32f303xc"] }
+cortex-m-rt = "0.6.14"
+panic-itm = "0.4.2"
+stm32f3-discovery = "0.7.0"
+
+[features]
+adapter = []

@@ -13,5 +13,3 @@ embedded-hal = "0.2.6"
 stm32f3xx-hal = { version = "0.8.1", features = ["ld", "rt", "stm32f303xc"] }
 
 m = "0.1.1"
-
-# aux15 = { path = "auxiliary" }
