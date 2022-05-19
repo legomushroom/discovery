@@ -4,16 +4,12 @@
 #[allow(unused_extern_crates)] //  bug rust-lang/rust#53964
 extern crate panic_itm; // panic handler
 
-use core::fmt::{self, Debug};
-use core::fmt::Write;
 use core::f32::consts::PI;
 
-use embedded_hal::digital::v2::PinState;
-use hal::gpio::marker::Gpio;
-use hal::gpio::{Gpioe, Output, Pin, PushPull};
-use hal::{i2c::I2c, pac::{Peripherals, USART1, usart1}, serial::Serial, time::rate::Hertz};
+use hal::{i2c::I2c, pac::Peripherals, serial::Serial, time::rate::Hertz};
 use stm32f3xx_hal::{self as hal, delay::Delay, prelude::*};
 
+#[allow(unused_imports)]
 use m::Float;
 
 // use embedded_hal::I2c;
@@ -21,71 +17,11 @@ use lsm303agr::Lsm303agr;
 
 use cortex_m_rt::entry;
 
-pub struct SerialPort {
-    usart1: &'static mut usart1::RegisterBlock,
-}
+mod leds;
+pub use leds::LEDs;
 
-impl fmt::Write for SerialPort {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        // write_str(self.usart1, s);
-
-        // let str = str.as_ref();
-        for char in s.chars() {
-            while self.usart1.isr.read().txe().bit_is_clear() {}
-
-            // Send a single character
-            self.usart1
-                .tdr
-                .write(|w| {
-                    return w.tdr().bits(char as u16);
-                });
-        }
-
-        Ok(())
-    }
-}
-
-impl SerialPort {
-    pub fn new(
-        usart1: &'static mut usart1::RegisterBlock,
-    ) -> Self {
-        return SerialPort { usart1 };
-    }
-}
-
-/// Cardinal directions. Each one matches one of the user LEDs.
-pub enum Direction {
-    /// North / LD3
-    North,
-    /// Northeast / LD5
-    NorthEast,
-    /// East / LD7
-    East,
-    /// Southeast / LD9
-    SouthEast,
-    /// South / LD10
-    South,
-    /// Southwest / LD8
-    SouthWest,
-    /// West / LD6
-    West,
-    /// Northwest / LD4
-    NorthWest,
-}
-impl Debug for Direction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::North => write!(f, "North"),
-            Self::NorthWest => write!(f, "NorthWest"),
-            Self::NorthEast => write!(f, "NorthEast"),
-            Self::South => write!(f, "South"),
-            Self::SouthWest => write!(f, "SouthWest"),
-            Self::SouthEast => write!(f, "SouthEast"),
-            Self::West => write!(f, "West"),
-            Self::East => write!(f, "East"),
-        }
-    }
-}
+mod compass_direction;
+pub use compass_direction::CompassDirection;
 
 #[entry]
 fn main() -> ! {
@@ -136,16 +72,9 @@ fn main() -> ! {
     
     let maybe_sensor = sensor.into_mag_continuous();
 
-    let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
-
-    let mut led8 = gpioe.pe8.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-    let mut led9 = gpioe.pe9.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-    let mut led10 = gpioe.pe10.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-    let mut led11 = gpioe.pe11.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-    let mut led12 = gpioe.pe12.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-    let mut led13 = gpioe.pe13.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-    let mut led14 = gpioe.pe14.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-    let mut led15 = gpioe.pe15.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+    let mut leds = LEDs::new(dp.GPIOE.split(
+        &mut rcc.ahb),
+    );
 
     match maybe_sensor {
         Ok(mut sensor) => {
@@ -155,61 +84,27 @@ fn main() -> ! {
 
                 let theta = -(data.y as f32).atan2(data.x as f32); // in radians
                 
-                let direction = if theta < -7. * PI / 8. {
-                    Direction::North
+                let compass_direction = if theta < -7. * PI / 8. {
+                    CompassDirection::North
                 } else if theta < -5. * PI / 8. {
-                    Direction::NorthWest
+                    CompassDirection::NorthWest
                 } else if theta < -3. * PI / 8. {
-                    Direction::West
+                    CompassDirection::West
                 } else if theta < -PI / 8. {
-                    Direction::SouthWest
+                    CompassDirection::SouthWest
                 } else if theta < PI / 8. {
-                    Direction::South
+                    CompassDirection::South
                 } else if theta < 3. * PI / 8. {
-                    Direction::SouthEast
+                    CompassDirection::SouthEast
                 } else if theta < 5. * PI / 8. {
-                    Direction::East
+                    CompassDirection::East
                 } else if theta < 7. * PI / 8. {
-                    Direction::NorthEast
+                    CompassDirection::NorthEast
                 } else {
-                    Direction::North
+                    panic!("Invalid direction!");
                 };
 
-                led8.set_state(PinState::Low).expect("Cannot set LED8 state.");
-                led9.set_state(PinState::Low).expect("Cannot set LED9 state.");
-                led10.set_state(PinState::Low).expect("Cannot set LED10 state.");
-                led11.set_state(PinState::Low).expect("Cannot set LED11 state.");
-                led12.set_state(PinState::Low).expect("Cannot set LED12 state.");
-                led13.set_state(PinState::Low).expect("Cannot set LED13 state.");
-                led14.set_state(PinState::Low).expect("Cannot set LED14 state.");
-                led15.set_state(PinState::Low).expect("Cannot set LED15 state.");
-
-                match direction {
-                    Direction::South => {
-                        led8.set_state(PinState::High).expect("Cannot set LED8 state.");
-                    },
-                    Direction::SouthWest => {
-                        led9.set_state(PinState::High).expect("Cannot set LED9 state.");
-                    },
-                    Direction::West => {
-                        led10.set_state(PinState::High).expect("Cannot set LED10 state.");
-                    },
-                    Direction::NorthWest => {
-                        led11.set_state(PinState::High).expect("Cannot set LED11 state.");
-                    },
-                    Direction::North => {
-                        led12.set_state(PinState::High).expect("Cannot set LED12 state.");
-                    },
-                    Direction::NorthEast => {
-                        led13.set_state(PinState::High).expect("Cannot set LED13 state.");
-                    },
-                    Direction::East => {
-                        led14.set_state(PinState::High).expect("Cannot set LED14 state.");
-                    },
-                    Direction::SouthEast => {
-                        led15.set_state(PinState::High).expect("Cannot set LED15 state.");
-                    },
-                }
+                leds.set_direction_led(compass_direction);
 
                 delay.delay_ms(100_u16);
             }
