@@ -1,3 +1,5 @@
+#![no_main]
+#![no_std]
 
 use embedded_hal::digital::v2::PinState;
 use hal::gpio::{Gpioe, U, Output, PushPull, Pin};
