@@ -1,0 +1,15 @@
+[package]
+authors = ["Jorge Aparicio <jorge@japaric.io>"]
+edition = "2018"
+name = "discovery"
+version = "0.1.0"
+
+[dependencies]
+panic-itm = "0.4.2"
+cortex-m = "0.7.2"
+cortex-m-rt = { version = "0.6.13", features = ["device"] }
+lsm303agr = "0.2.2"
+embedded-hal = "0.2.6"
+stm32f3xx-hal = { version = "0.8.1", features = ["ld", "rt", "stm32f303xc"] }
+
+m = "0.1.1"
