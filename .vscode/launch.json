@@ -9,9 +9,7 @@
             "executable": "${workspaceFolder}/target/thumbv7em-none-eabihf/debug/usart",
             "preLaunchTask": "Build",
             "servertype": "external",
-            "configFiles": [
-                "${workspaceFolder}/openocd.gdb",
-            ],
+            "configFiles": [],
             // This may need to be gdb-multiarch depending on your system (i.e. Linux vs Mac)
             "gdbPath" : "gdb-multiarch",
             // Connect to an already running OpenOCD instance
