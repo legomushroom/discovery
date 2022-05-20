@@ -36,16 +36,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "aux11"
-version = "0.1.0"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "panic-itm",
- "stm32f3-discovery",
-]
-
-[[package]]
 name = "bare-metal"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -681,8 +671,11 @@ checksum = "d22af068fba1eb5edcb4aea19d382b2a3deb4c8f9d475c589b6ada9e0fd493ee"
 name = "usart"
 version = "0.1.0"
 dependencies = [
- "aux11",
+ "cortex-m",
+ "cortex-m-rt",
  "heapless",
+ "panic-itm",
+ "stm32f3-discovery",
 ]
 
 [[package]]

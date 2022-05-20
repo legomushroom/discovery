@@ -4,8 +4,14 @@ edition = "2018"
 name = "usart"
 version = "0.1.0"
 
-[dependencies.aux11]
-path = "auxiliary"
+[dependencies]
+cortex-m = "0.7.2"
+cortex-m-rt = "0.6.14"
+panic-itm = "0.4.2"
+stm32f3-discovery = "0.7.0"
+
+# [dependencies.aux11]
+# path = "auxiliary"
 # enable this if you are going to use an external serial adapter
 # features = ["adapter"]
 
