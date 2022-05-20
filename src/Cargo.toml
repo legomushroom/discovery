@@ -12,3 +12,8 @@ path = "auxiliary"
 [dependencies.heapless]
 default-features = false
 version = "0.7.1"
+
+[profile.release]
+codegen-units = 1
+debug = true
+lto = true
