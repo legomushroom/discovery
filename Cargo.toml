@@ -23,13 +23,3 @@ version = "0.7.1"
 codegen-units = 1
 debug = true
 lto = true
-
-[target.thumbv7em-none-eabihf]
-runner = "gdb-multiarch -q -x openocd.gdb"
-
-# rustflags = [
-#   "-C", "link-arg=-Tlink.x",
-# ]
-
-[build]
-target = "thumbv7em-none-eabihf"
