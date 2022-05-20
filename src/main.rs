@@ -4,14 +4,10 @@
 #[allow(unused_extern_crates)] // NOTE(allow) bug rust-lang/rust53964
 extern crate panic_itm; // panic handler
 
-use stm32f3_discovery::stm32f3xx_hal::{
-    prelude::*,
-    serial::Serial,
-    pac::{self, USART1},
-};
+#[allow(unused_imports)]
+use stm32f3_discovery::stm32f3xx_hal::prelude::*;
 
 #[allow(unused_imports)]
-// use aux11::{entry, iprint, iprintln};
 use cortex_m_rt::entry;
 
 #[entry]
