@@ -15,11 +15,11 @@ stm32f3-discovery = "0.7.0"
 # enable this if you are going to use an external serial adapter
 # features = ["adapter"]
 
-[dependencies.heapless]
-default-features = false
-version = "0.7.1"
+# [dependencies.heapless]
+# default-features = false
+# version = "0.7.1"
 
-[profile.release]
-codegen-units = 1
-debug = true
-lto = true
+# [profile.release]
+# codegen-units = 1
+# debug = true
+# lto = true
