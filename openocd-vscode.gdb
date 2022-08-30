@@ -11,5 +11,4 @@ break HardFault
 break main
 continue
 
-break main.rs:24
-break main.rs:29
+break main.rs:19
