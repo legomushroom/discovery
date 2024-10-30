@@ -13,9 +13,9 @@
                 "${workspaceFolder}/openocd-vscode.gdb",
             ],
             // This may need to be gdb-multiarch depending on your system (i.e. Linux vs Mac)
-            "gdbPath" : "gdb-multiarch",
+            "gdbPath" : "arm-none-eabi-gdb",
             // Connect to an already running OpenOCD instance
-            "gdbTarget": "macbook:3333",
+            "gdbTarget": ":3333",
             "preLaunchCommands": [],
             // Work around for stopping at main on restart
             "postRestartCommands": [],
